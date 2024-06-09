@@ -66,11 +66,12 @@ grid_system
 
 # Convert geographic coordinates to Equi7Grid tile
 lon, lat = -79.5, -5.49
-results = grid_system.lonlat2grid(lon=lon, lat=lat, level=7)
+results = grid_system.lonlat2grid(lon=lon, lat=lat)
 
 # Convert Equi7Grid tile to geographic coordinates
-grid_system.grid2lonlat(grid_id=results)
-# ?, ?
+grid_system.grid2lonlat(grid_id=results["id"][0])
+#      lon       lat        x        y
+#0 -79.543717 -5.517556  5140480  6461440
 ```
 
 The `Equi7Grid` class also provides a method for creating a grid of Equi7Grid tiles that cover a given bounding box.
@@ -78,13 +79,12 @@ The `Equi7Grid` class also provides a method for creating a grid of Equi7Grid ti
 
 ```python
 import geopandas as gpd
-
 from equi7grid_lite import Equi7Grid
 
 # Define a POLYGON geometry
 world_filepath = gpd.datasets.get_path('naturalearth_lowres')
 world = gpd.read_file(world_filepath)
-country = world[world.name == "Peru"].geometry[0]
+country = world[world.name == "Peru"].geometry.values[0]
 
 # Create a grid of Equi7Grid tiles
 grid_system = equi7grid_lite.Equi7GridLite(t1_tile_size=2560)
@@ -95,7 +95,7 @@ grid = grid_system.create_grid(
     level=8,
     zone="SA",
     mask=polygon, # Only include tiles that intersect the polygon
-    landcover=True # Only include tiles with landmasses    
+    coverland=True # Only include tiles with landmasses    
 )
 
 # Export the grid to a GeoDataFrame
