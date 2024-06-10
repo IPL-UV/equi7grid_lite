@@ -1,7 +1,7 @@
 # equi7grid-lite
 
 <p align="center">
-  <a href="https://ipl-uv.github.io"><img src="docs/logo.jpeg" alt="header" width="70%"></a>
+  <a href="https://ipl-uv.github.io"><img src="docs/logo.jpeg" alt="header" width="50%"></a>
 </p>
 
 <p align="center">
