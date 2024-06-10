@@ -11,17 +11,20 @@
 </p>
 
 <p align="center">
-<a href='https://pypi.python.org/pypi/opensr-test'>
-<img src='https://img.shields.io/pypi/v/opensr-test.svg' alt='PyPI' />
+<a href='https://pypi.python.org/pypi/equi7grid-lite'>
+<img src='https://img.shields.io/pypi/v/equi7grid-lite.svg' alt='PyPI' />
+</a>
+<a href='https://colab.research.google.com/drive/1SBjl4GVgCFUpVch2Prju5oiXN8WyzZTi?usp=sharing'>
+<img src='https://colab.research.google.com/assets/colab-badge.svg' alt='COLAB' />
 </a>
 <a href="https://opensource.org/licenses/MIT" target="_blank">
-    <img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="License">
+<img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="License">
 </a>
 <a href="https://github.com/psf/black" target="_blank">
-    <img src="https://img.shields.io/badge/code%20style-black-000000.svg" alt="Black">
+<img src="https://img.shields.io/badge/code%20style-black-000000.svg" alt="Black">
 </a>
 <a href="https://pycqa.github.io/isort/" target="_blank">
-    <img src="https://img.shields.io/badge/%20imports-isort-%231674b1?style=flat&labelColor=ef8336" alt="isort">
+<img src="https://img.shields.io/badge/%20imports-isort-%231674b1?style=flat&labelColor=ef8336" alt="isort">
 </a>
 </p>
 
@@ -62,16 +65,24 @@ The `equi7grid-lite` package provides a single class, `Equi7Grid`, which can be 
 from equi7grid_lite import Equi7Grid
 
 grid_system = Equi7Grid(min_grid_size=2560)
-grid_system
+# Equi7Grid(min_grid_size=2560)
+# ----------------
+# levels: 0, 1, ... , 7, 8
+# zones: AN, NA, OC, SA, AF, EU, AS
+# min_grid_size: 2560 meters
+# max_grid_size: 1310720 meters
+
 
 # Convert geographic coordinates to Equi7Grid tile
 lon, lat = -79.5, -5.49
-results = grid_system.lonlat2grid(lon=lon, lat=lat)
+grid_system.lonlat2grid(lon=lon, lat=lat)
+# id	x	y	zone	level	geometry
+# 0	SA2560_E2008N2524	5140480.0	6461440.0	SA	Z1	POLYGON ((5145600.000 6461440.000, 5145600.000...
 
 # Convert Equi7Grid tile to geographic coordinates
-grid_system.grid2lonlat(grid_id=results["id"][0])
+grid_system.grid2lonlat(grid_id="SA2560_E2008N2524)
 #      lon       lat        x        y
-#0 -79.543717 -5.517556  5140480  6461440
+# 0 -79.543717 -5.517556  5140480  6461440
 ```
 
 The `Equi7Grid` class also provides a method for creating a grid of Equi7Grid tiles that cover a given bounding box.
@@ -86,15 +97,11 @@ world_filepath = gpd.datasets.get_path('naturalearth_lowres')
 world = gpd.read_file(world_filepath)
 country = world[world.name == "Peru"].geometry.values[0]
 
-# Create a grid of Equi7Grid tiles
-grid_system = equi7grid_lite.Equi7GridLite(t1_tile_size=2560)
-grid_system
-
 # Create a grid of Equi7Grid tiles that cover the bounding box of the POLYGON geometry
 grid = grid_system.create_grid(
-    level=8,
+    level=4,
     zone="SA",
-    mask=polygon, # Only include tiles that intersect the polygon
+    mask=country, # Only include tiles that intersect the polygon
     coverland=True # Only include tiles with landmasses    
 )
 
@@ -102,7 +109,7 @@ grid = grid_system.create_grid(
 grid.to_file("grid.shp")
 ```
 
-By running `create_grid` with different levels, you can obtain for any region its corresponding Equi7Grid Quad-Tree grid structure.
+By running `create_grid` with different levels, you can obtain its corresponding Equi7Grid Quad-Tree grid structure for any region.
 
 ![grid](docs/equi7grid_demo.gif)
 
@@ -124,6 +131,7 @@ Each zone has the following attributes:
 - *bbox_geo*: The bounding box of the zone in EPSG:4326.
 - *bbox_equi7grid*: The bounding box of the zone in the Equi7Grid CRS.
 - *landmasses_equi7grid*: The landmasses of the zone in the Equi7Grid CRS.
+- *origin*: The central meridian and the latitude of origin.
 
 ## License
 
