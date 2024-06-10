@@ -2,7 +2,7 @@
 name = "equi7grid_lite"
 version = "0.1.0"
 description = "A user-friendly Python interface to interact with the Equi7Grid grid system"
-authors = ["Cesar Aybar <fcesar.aybar@uv.es>", "Jair Flores <jfloresf0517@gmail.com>"]
+authors = ["Cesar Aybar <cesar.aybar@uv.es>", "Jair Flores <jfloresf0517@gmail.com>"]
 repository = "https://github.com/csaybar/equi7grid-lite"
 documentation = "https://ipl-uv.github.io/equi7grid-lite/"
 readme = "README.md"
