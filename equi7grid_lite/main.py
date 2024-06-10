@@ -198,6 +198,12 @@ class Equi7Grid:
             mask_plane = mask_gpd.to_crs(self.zone_crs[zone_index]).geometry[0]
             zone_geometry = zone_geometry.intersection(mask_plane)
 
+            # Consider only 8 decimal of precision
+            # This is helpful to avoid floating point errors
+            zone_geometry = shapely.wkt.loads(
+                shapely.wkt.dumps(zone_geometry, rounding_precision=8)
+            )
+
         # Obtain the bounding box of the specified zone
         bbox_geo = zone_geometry.bounds
         grid_user_distance = self.min_grid_size * (2 ** level)
@@ -257,7 +263,7 @@ class Equi7Grid:
         Returns:
             gpd.GeoDataFrame: The Equi7Grid Tile.
         """
-
+        
         # Create a gp dataframe
         point = gpd.GeoDataFrame(geometry=[Point(lon, lat)], crs="EPSG:4326")
 
@@ -273,7 +279,8 @@ class Equi7Grid:
             # Intersect the point with the zone
             condition = point.to_crs(zone_crs).intersects(zone_geom)[0]
 
-        
+            # If the point is within many zones, select the closest one
+            # to the origin of the zone
             if condition:
                 lon_ref, lat_ref = self.zone_origin[index]
                 arc_distance = haversine_distance(lon, lat, lon_ref, lat_ref)
@@ -286,7 +293,7 @@ class Equi7Grid:
         name = self.zone_names[best_index]
 
         # Search in the level 1 grid & add bottom left coordinates
-        q = self.create_grid(level=1, zone=name, mask=point.geometry[0], coverland=False)
+        q = self.create_grid(level=0, zone=name, mask=point.geometry[0], coverland=False)
         q.insert(1, "x", q.geometry.bounds.minx)
         q.insert(2, "y", q.geometry.bounds.miny)
 
@@ -310,17 +317,11 @@ class Equi7Grid:
         ## Extract the zone
         zone = grid_id[:2]
 
-        ## Extract the distance
-        d_regex_exp = re.compile(r"(\d+)_")
-        distance = int(d_regex_exp.search(grid_id).group(1))
-
-        ## Extract the X coordinate
-        e_regex_exp = re.compile(r"E(\d+)")
-        nxtile = int(e_regex_exp.search(grid_id).group(1))
-
-        ## Extract the Y coordinate
-        n_regex_exp = re.compile(r"N(\d+)")
-        nytile = int(n_regex_exp.search(grid_id).group(1))
+        ## Extract the metadata from the grid_id
+        re_expr = re.compile(r"SA(\d+)_E(\d+)N(\d+)")
+        distance = int(re_expr.search(grid_id).group(1))
+        nxtile = int(re_expr.search(grid_id).group(2))
+        nytile = int(re_expr.search(grid_id).group(3))
 
         # From Grid to Equi7Grid coordinates
         x = nxtile * distance

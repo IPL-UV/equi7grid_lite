@@ -1,2 +1,6 @@
 
 demo.py
+
+dist/
+
+equi7grid_lite/__pycache__/
