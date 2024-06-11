@@ -71,22 +71,30 @@ grid_system = Equi7Grid(min_grid_size=2560)
 # zones: AN, NA, OC, SA, AF, EU, AS
 # min_grid_size: 2560 meters
 # max_grid_size: 1310720 meters
+```
 
+To convert between geographic coordinates and Equi7Grid tiles, use the `lonlat2grid` and `grid2lonlat` methods.
 
-# Convert geographic coordinates to Equi7Grid tile
+```python
 lon, lat = -79.5, -5.49
 grid_system.lonlat2grid(lon=lon, lat=lat)
 # id	x	y	zone	level	geometry
 # 0	SA2560_E2008N2524	5140480.0	6461440.0	SA	Z1	POLYGON ((5145600.000 6461440.000, 5145600.000...
 
-# Convert Equi7Grid tile to geographic coordinates
-grid_system.grid2lonlat(grid_id="SA2560_E2008N2524)
+grid_system.grid2lonlat(grid_id="SA2560_E2008N2524")
 #      lon       lat        x        y
 # 0 -79.543717 -5.517556  5140480  6461440
 ```
 
-The `Equi7Grid` class also provides a method for creating a grid of Equi7Grid tiles that cover a given bounding box.
+For users who want to align coordinates to the Equi7Grid Quad-Tree structure, the `align2grid` method is available.
 
+```python
+grid_system.align2grid(lon=lon, lat=lat, level=5)
+#         lon       lat
+#0 -80.116158 -6.105519
+```
+
+The `Equi7Grid` class also provides a method for creating a grid of Equi7Grid tiles that cover a given bounding box.
 
 ```python
 import geopandas as gpd

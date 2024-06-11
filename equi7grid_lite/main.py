@@ -1,6 +1,6 @@
 import math
 import re
-from typing import Dict, List, Literal, Optional, Tuple
+from typing import Dict, List, Literal, Optional, Tuple, Union
 
 import geopandas as gpd
 import numpy as np
@@ -66,6 +66,11 @@ class Equi7Grid:
 
         # Define the upper bounds (maximum grid size per zone)
         self.zone_geometry_max_grids, self.max_grid_size = self.create_init_grid()
+
+        # Calculate the levels
+        max_level: int = int(np.log2(self.max_grid_size / self.min_grid_size))
+        self.levels = list(range(max_level))
+
 
         # Define the Equi7Grid zones metadata
         self.AN: Equi7GridZone = dict_to_datamodel(zone_metadata, 0)
@@ -152,7 +157,7 @@ class Equi7Grid:
         level: int,
         zone: Literal["AN", "NA", "OC", "SA", "AF", "EU", "AS"],
         mask: Optional[shapely.geometry.base.BaseGeometry] = None,
-        coverland: Optional[bool] = True,
+        coverland: Optional[bool] = True
     ) -> gpd.GeoDataFrame:
         """Create a grid for a specific zone.
 
@@ -253,12 +258,21 @@ class Equi7Grid:
         # intersect the grid with the zone geometry
         return local_grid[local_grid.intersects(zone_geometry)]
 
-    def lonlat2grid(self, lon: float, lat: float) -> gpd.GeoDataFrame:
+    def lonlat2grid(
+        self,
+        lon: float,
+        lat: float,
+        level: Optional[int] = 0,
+        centroid: Optional[bool] = True
+    ) -> gpd.GeoDataFrame:
         """Convert a latitude and longitude to an Equi7Grid Tile.
 
         Args:
             lon (float): The longitude.
             lat (float): The latitude.
+            level (Optional[int], optional): The grid level. Defaults to 0.
+            centroid (Optional[bool], optional): If True, it will return the
+                centroid of the grid tile. Defaults to True.
 
         Returns:
             gpd.GeoDataFrame: The Equi7Grid Tile.
@@ -268,7 +282,7 @@ class Equi7Grid:
         point = gpd.GeoDataFrame(geometry=[Point(lon, lat)], crs="EPSG:4326")
 
         # Find the zone where this point is located
-        haversine_distance_min = 6378100
+        haversine_distance_min = math.inf
         for index, zone in enumerate(self.zone_names):            
             # Load the Zone
             zone_geom = self.zone_geometry[index]
@@ -284,7 +298,8 @@ class Equi7Grid:
             if condition:
                 lon_ref, lat_ref = self.zone_origin[index]
                 arc_distance = haversine_distance(lon, lat, lon_ref, lat_ref)
-                #print("The zone is: ", zone, "The distance is: ", arc_distance)
+                
+                # Update the minimum distance and set the best index (best zone)
                 if arc_distance < haversine_distance_min:
                     haversine_distance_min = arc_distance
                     best_index = index
@@ -293,27 +308,41 @@ class Equi7Grid:
         name = self.zone_names[best_index]
 
         # Search in the level 1 grid & add bottom left coordinates
-        q = self.create_grid(level=0, zone=name, mask=point.geometry[0], coverland=False)
-        q.insert(1, "x", q.geometry.bounds.minx)
-        q.insert(2, "y", q.geometry.bounds.miny)
+        q = self.create_grid(level=level, zone=name, mask=point.geometry[0], coverland=False)
+        
+        if centroid:
+            q.insert(1, "x", q.geometry.centroid.x)
+            q.insert(2, "y", q.geometry.centroid.y)
+        else:
+            q.insert(1, "x", q.geometry.bounds.minx)
+            q.insert(2, "y", q.geometry.bounds.miny)        
 
         return q
 
     def grid2lonlat(
-        self, grid_id: str, xy_coords: Optional[bool] = True
+        self,
+        grid_id: Union[str, gpd.GeoDataFrame],
+        xy_coords: Optional[bool] = False,
+        centroid: Optional[bool] = True
     ) -> pd.DataFrame:
         """Convert an Equi7Grid Tile to a latitude and longitude.
 
         Args:
             grid_id (str): The Equi7Grid Tile ID.
             xy_coords (Optional[bool], optional): If True, it will
-            also return the X and Y coordinates. Defaults to
+                also return the X and Y coordinates in the Equi7Grid
+                system. Defaults to True.
+            centroid (Optional[bool], optional): If True, it will 
+                return the centroid of the grid tile. Defaults to 
                 True.
 
         Returns:
             pd.DataFrame: A DataFrame with the latitude and longitude
         """
-
+        # Check if the grid_id is a string or a GeoDataFrame
+        if isinstance(grid_id, gpd.GeoDataFrame):
+            grid_id = grid_id.id.values[0]
+            
         ## Extract the zone
         zone = grid_id[:2]
 
@@ -324,8 +353,13 @@ class Equi7Grid:
         nytile = int(re_expr.search(grid_id).group(3))
 
         # From Grid to Equi7Grid coordinates
-        x = nxtile * distance
-        y = nytile * distance
+        if centroid:
+            x = (nxtile + 0.5) * distance
+            y = (nytile + 0.5) * distance
+        else:
+            x = nxtile * distance
+            y = nytile * distance
+
         point_local = Point(x, y)
 
         # From Equi7Grid to Geographic coordinates
@@ -342,25 +376,50 @@ class Equi7Grid:
         # from dict to dataframe
         return pd.DataFrame(results, index=[0])
 
+    def align2grid(
+        self,
+        lon: float,
+        lat: float,    
+        level: Optional[int] = 0,
+        centroid: Optional[bool] = True
+    ) -> gpd.GeoDataFrame:
+        """ Align the grid to the nearest grid tile.
+
+        Args:
+            lon (float): The longitude.
+            lat (float): The latitude.
+            level (int): The grid level. Defaults to 0.
+            centroid (Optional[bool], optional): If True, it will 
+                return the centroid of the grid tile. Defaults to
+                True.
+
+        Returns:
+            gpd.GeoDataFrame: A GeoDataFrame with the coordinates
+                aligned to the grid.
+        """
+        return self.grid2lonlat(
+            grid_id=self.lonlat2grid(lon, lat, level=level, centroid=centroid),
+            centroid=centroid,
+            xy_coords=False
+        )
+        
+
     def __str__(self) -> str:
         """Display the Equi7Grid information.
 
         Returns:
             str: A string representation of the Equi7Grid information.
         """
-        # Calculate the levels
-        levels = int(np.log2(self.max_grid_size / self.min_grid_size))
-        levels = list(range(levels))
 
         # If levels has more than 4 elements
-        if len(levels) > 4:
-            levels0 = levels[0]
-            levels1 = levels[1]
-            levelsn = levels[-1]
-            levelsn1 = levels[-2]
+        if len(self.levels) > 4:
+            levels0 = self.levels[0]
+            levels1 = self.levels[1]
+            levelsn = self.levels[-1]
+            levelsn1 = self.levels[-2]
             level_msg = f"{levels0}, {levels1}, ... , {levelsn1}, {levelsn}"
         else:
-            level_msg = f"{', '.join(map(str, levels))}"
+            level_msg = f"{', '.join(map(str, self.levels))}"
 
         message = f"Equi7Grid(min_grid_size={self.min_grid_size})\n"
         message += f"----------------\n"
