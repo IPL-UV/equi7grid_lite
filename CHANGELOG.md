@@ -21,6 +21,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 Unreleased changes here.
 
+## [0.4.0] - 2024-06-12
+
+- Bug in a regex expression fixed. `grid2lonlat` method now works with regions outside South America.
+- New method added to the Equi7Grid class. The method is called `lonlat2grid_ids`. This method is used to convert geographic coordinates to Equi7Grid tile ids given a specific level.
+
+
 ## [0.3.0] - 2024-06-11
 
 - A new attribute added self.levels to the Equi7Grid constructor. This attribute is a List of the available levels in the QuadTree structure.

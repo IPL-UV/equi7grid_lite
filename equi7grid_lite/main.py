@@ -343,14 +343,12 @@ class Equi7Grid:
         if isinstance(grid_id, gpd.GeoDataFrame):
             grid_id = grid_id.id.values[0]
             
-        ## Extract the zone
-        zone = grid_id[:2]
-
         ## Extract the metadata from the grid_id
-        re_expr = re.compile(r"SA(\d+)_E(\d+)N(\d+)")
-        distance = int(re_expr.search(grid_id).group(1))
-        nxtile = int(re_expr.search(grid_id).group(2))
-        nytile = int(re_expr.search(grid_id).group(3))
+        re_expr = re.compile(r"\b([A-Z]+)(\d+)_E(\d+)N(\d+)")
+        zone = re_expr.search(grid_id).group(1)
+        distance = int(re_expr.search(grid_id).group(2))
+        nxtile = int(re_expr.search(grid_id).group(3))
+        nytile = int(re_expr.search(grid_id).group(4))
 
         # From Grid to Equi7Grid coordinates
         if centroid:
@@ -402,7 +400,50 @@ class Equi7Grid:
             centroid=centroid,
             xy_coords=False
         )
+
+    def lonlat2grid_ids(
+        self,
+        lon: float,
+        lat: float,
+        level: int
+    ) -> list:
+        """Obtain the grid ids from a given point.
+
+        Args:
+            lon (float): Longitude of the point.
+            lat (float): Latitude of the point.
+            level (int): Level of the grid.
+
+        Returns:
+            list: A list with the grid ids.
+        """
+        # Obtain the boundaries of the grid
+        grid_information = self.lonlat2grid(lon=lon, lat=lat, level=level)
+
+        # Obtain the boundaries of the grid
+        minx, miny, maxx, maxy = grid_information.geometry.bounds.values[0]
         
+        # Obtain the region code and the distance
+        re_expr = re.compile(r"\b([A-Z]+)(\d+)_E(\d+)N(\d+)")
+        region_code = re_expr.match(grid_information.id.values[0]).group(1)
+        distance = int(re_expr.match(grid_information.id.values[0]).group(2))        
+
+        # Calculate the number of steps in the x and y directions
+        x_steps = math.ceil((maxx - minx) / distance)
+        y_steps = math.ceil((maxy - miny) / distance)
+        
+        grids = []    
+        for i in range(x_steps):
+            for j in range(y_steps):
+
+                # Calculate the boundaries of each grid cell
+                cell_minx = str(int(minx / distance + i * distance))
+                cell_miny = str(int(miny / distance + j * distance))
+                
+                # Cook the grid name
+                name = f"{region_code}{distance}_E{cell_minx}N{cell_miny}"                
+                grids.append(name)
+        return grids
 
     def __str__(self) -> str:
         """Display the Equi7Grid information.
