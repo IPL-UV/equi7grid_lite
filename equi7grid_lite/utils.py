@@ -1,9 +1,10 @@
-import math
 import importlib
+import math
 import pickle
 from typing import Dict
 
 import geopandas as gpd
+import shapely.geometry
 
 
 def load_grid() -> Dict[str, gpd.GeoDataFrame]:
@@ -23,36 +24,28 @@ def load_grid() -> Dict[str, gpd.GeoDataFrame]:
     return grid
 
 
-def utils_add_id(local_grid: gpd.GeoDataFrame, distance: int, zone_id: str) -> str:
-    """Add The Equi7Grid ID to the grid cells.
+def get_id(polygon: shapely.geometry.Polygon, distance: int, zone_id: str) -> str:
+    """Get the id of specific grid cells at level 0.
 
     Args:
-        local_grid (gpd.GeoDataFrame): The grid cells.
+        local_grid (shapely.geometry.Polygon): The grid cells.
         distance (Optional[int], optional): The distance between the
             cells. Defaults to 10000.
 
     Returns:
         str: The name of the grid cells.
     """
+    bbox = polygon.bounds
+    minx, miny, maxx, maxy = bbox
+    east_code = str(int(minx // distance)).zfill(4)
+    north_code = str(int(miny // distance)).zfill(4)
+    distance_code = str(int(distance))
 
-    def get_name(polygon):
-        bbox = polygon.geometry.bounds
-        minx, miny, maxx, maxy = bbox
-        east_code = str(int(minx // distance)).zfill(4)
-        north_code = str(int(miny // distance)).zfill(4)
-        distance_code = str(int(distance))
-        return f"{zone_id}{distance_code}_E{east_code}N{north_code}"
-
-    return local_grid.apply(get_name, axis=1)
+    return f"{zone_id}{distance_code}_E{east_code}N{north_code}"
 
 
-def haversine_distance(
-    lon1: float,
-    lat1: float,
-    lon2: float,
-    lat2: float
-) -> float:
-    """ Calculate the great-circle distance between two points on 
+def haversine_distance(lon1: float, lat1: float, lon2: float, lat2: float) -> float:
+    """Calculate the great-circle distance between two points on
     the Earth's surface.
 
     Args:
@@ -67,17 +60,24 @@ def haversine_distance(
 
     # Convert latitude and longitude from degrees to radians
     lon1, lat1, lon2, lat2 = map(math.radians, [lon1, lat1, lon2, lat2])
-    
+
     # Haversine formula
     dlon = lon2 - lon1
     dlat = lat2 - lat1
-    a = math.sin(dlat / 2)**2 + math.cos(lat1) * math.cos(lat2) * math.sin(dlon / 2)**2
+    a = (
+        math.sin(dlat / 2) ** 2
+        + math.cos(lat1) * math.cos(lat2) * math.sin(dlon / 2) ** 2
+    )
     c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
-    
+
     # Distance in radians
     distance_radians = c
-    
+
     # Convert distance from radians to degrees
     distance_degrees = math.degrees(distance_radians)
-    
+
     return distance_degrees
+
+
+def intersects_func(geometry, land):
+    return land.intersects(geometry)

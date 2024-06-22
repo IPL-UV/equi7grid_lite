@@ -6,7 +6,7 @@
 
 <p align="center">
     <em>
-    No one will drive us from the paradise which EquiGrid created for us
+    No one will drive us from the paradise which Equi7Grid created for us
     </em>
 </p>
 
@@ -34,11 +34,11 @@ The `equi7grid-lite` package implements a user-friendly Python interface to inte
 
 - *Quad-Tree Grid Splitting*: Users are required to split the grid in a Quad-Tree fashion, meaning each grid level is divided into four tiles. For example, transitioning from level 1 to level 0 involves splitting each tile into four regular smaller tiles.
 
-- *Revised Grid ID Encoding*: The grid ID is always encoded in meters, and the reference to the tile system (e.g., "T1", "T3", "T6") is removed. Instead, tiles are dynamically defined by the `min_grid_size` parameter. Here is a comparison between the original Equi7Grid and equi7grid-lite:
+- *Revised Grid ID Encoding*: The grid ID is always encoded in meters, and the reference to the tile system (e.g., "T1", "T3", "T6") is removed. Instead, tiles are dynamically defined by the `min_grid_size` parameter. Here is a comparison between the original Equi7Grid and equi7grid-lite name conventions:
 
     - 'EU500M_E036N006T6' -> 'EU2560_E4521N3011'
 
-    Where 'EU' and 'AF' are the zones, '2560' is the `min_grid_size`, 'E4521' is the position in the *x* tile axis, and 'N3011' is the position in the *y* tile axis.
+    Where 'EU' is the Equi7Grid zone, '2560' is the `min_grid_size`, 'E4521' is the position in the *x* tile grid, and 'N3011' is the position in the *y* tile grid.
 
 - *Upper Bound Level*: The maximum grid level is determined as the nearest lower distance to 2_500_000 meters. This threshold serves as a limit to create the Quad-Tree grid structure.
 
@@ -73,44 +73,43 @@ grid_system = Equi7Grid(min_grid_size=2560)
 # max_grid_size: 1310720 meters
 ```
 
-To convert between geographic coordinates and Equi7Grid tiles, use the `lonlat2grid` and `grid2lonlat` methods.
+To convert between geographic coordinates and Equi7Grid tiles, use the `lonlat2grid` method.
 
 ```python
+
 lon, lat = -79.5, -5.49
 grid_system.lonlat2grid(lon=lon, lat=lat)
-# id	x	y	zone	level	geometry
-# 0	SA2560_E2008N2524	5140480.0	6461440.0	SA	Z1	POLYGON ((5145600.000 6461440.000, 5145600.000...
-
-grid_system.grid2lonlat(grid_id="SA2560_E2008N2524")
-#      lon       lat        x        y
-# 0 -79.543717 -5.517556  5140480  6461440
+#                  id        lon       lat          x          y zone level  land             geometry
+#0  SA2560_E2009N2525 -79.507568 -5.485739  5144320.0  6465280.0   SA    Z0  True  POLYGON ((514560...
 ```
 
-For users who want to align coordinates to the Equi7Grid Quad-Tree structure, the `align2grid` method is available.
+Use the `grid2lonlat` method to convert from Equi7Grid tile id to geographic coordinates.
+
 
 ```python
-grid_system.align2grid(lon=lon, lat=lat, level=5)
-#         lon       lat
-#0 -80.116158 -6.105519
+grid_system.grid2lonlat(grid_id="SA2560_E2009N2525")
+#                  id        lon       lat          x          y zone level  land             geometry
+#0  SA2560_E2009N2525 -79.507568 -5.485739  5144320.0  6465280.0   SA    Z0  True  POLYGON ((514560...
 ```
 
-The `Equi7Grid` class also provides a method for creating a grid of Equi7Grid tiles that cover a given bounding box.
+The `Equi7Grid` class also provides a method to create a grid of Equi7Grid upper-level tiles that
+cover a given bounding box.
 
 ```python
 import geopandas as gpd
+
 from equi7grid_lite import Equi7Grid
 
 # Define a POLYGON geometry
 world_filepath = gpd.datasets.get_path('naturalearth_lowres')
 world = gpd.read_file(world_filepath)
-country = world[world.name == "Peru"].geometry.values[0]
+country = world[world.name == "Peru"].geometry
 
 # Create a grid of Equi7Grid tiles that cover the bounding box of the POLYGON geometry
 grid = grid_system.create_grid(
     level=4,
     zone="SA",
-    mask=country, # Only include tiles that intersect the polygon
-    coverland=True # Only include tiles with landmasses    
+    mask=country # Only include tiles that intersect the polygon
 )
 
 # Export the grid to a GeoDataFrame
@@ -140,6 +139,70 @@ Each zone has the following attributes:
 - *bbox_equi7grid*: The bounding box of the zone in the Equi7Grid CRS.
 - *landmasses_equi7grid*: The landmasses of the zone in the Equi7Grid CRS.
 - *origin*: The central meridian and the latitude of origin.
+
+## Use Equi7Grid with cubo
+
+The `equi7grid-lite` package can be used in conjunction with the [cubo](https://github.com/ESDS-Leipzig/cubo) to retrieve Earth Observation (EO) data.
+
+```python
+import cubo
+import matplotlib.pyplot as plt
+import numpy as np
+import rioxarray
+from rasterio.enums import Resampling
+
+from equi7grid_lite import Equi7Grid
+
+# Initialize Equi7Grid system
+grid_system = Equi7Grid(min_grid_size=2560)
+
+# Specify the center coordinates
+lon, lat = -122.4194, 37.7749
+
+# Retrieve parameters for the CUBO request
+cubo_parameters = grid_system.cubo_utm_parameters(lon=lon, lat=lat)
+
+# Define the cube request using CUBO
+da = cubo.create(
+    lat=cubo_parameters["lat"],
+    lon=cubo_parameters["lon"],
+    collection="sentinel-2-l2a",  # Name of the STAC collection
+    bands=["B04", "B03", "B02"],   # Bands to retrieve
+    start_date="2021-08-01",       # Start date of the cube
+    end_date="2021-10-30",         # End date of the cube
+    edge_size=cubo_parameters["distance"] // 10,  # Distance in pixels
+    resolution=10,                 # Pixel size of the cube (m)
+    query={"eo:cloud_cover": {"lt": 50}}  # Query parameters
+)
+
+# Add the CRS to the cube
+da = da.rio.write_crs(f"epsg:{da.attrs['epsg']}")
+da = da.drop_vars("cubo:distance_from_center")
+
+# Convert the cube to a dataset and compute median over time
+image = da.to_dataset("band").median("time", skipna=True)
+
+# Increase the resolution of the cube with Lanczos resampling
+image_reprojected = image.rio.reproject(
+    cubo_parameters["crs"],
+    resolution=2.5,
+    resampling=Resampling.lanczos
+)
+
+# Downsample the cube with nearest neighbor resampling
+image_reprojected = image_reprojected.rio.reproject(
+    cubo_parameters["crs"],
+    resolution=10,
+    resampling=Resampling.nearest
+)
+
+# Clip the cube to the specified polygon
+composite_e7g = image_reprojected.rio.clip([cubo_parameters["polygon"]]).to_array()
+
+# Save the images in UTM and E7G projections
+composite_e7g.rio.to_raster("composite_e7g.tif")
+image.to_array().rio.to_raster("composite_utm.tif")
+```
 
 ## License
 

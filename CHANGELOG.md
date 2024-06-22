@@ -19,7 +19,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
-Unreleased changes here.
+## [0.6.0] - 2024-06-22
+
+- Iterating to obtain a better API. We now only have three core methods in the Equi7Grid class. The methods are `lonlat2grid`, `grid2lonlat`, and `create_grid`. We prefer to keep the API simple and easy to use.
+
+- We have two new auxiliary methods in the Equi7Grid class. The methods are `grid2grid` and `cubo_utm_parameters`. The `grid2grid` method is used to obtain the subgrids at the finest level given a superior grid tile. This method runs in parallel to speed up the process and does not run validations. The `cubo_utm_parameters` method is used to obtain the CUBO UTM parameters given a lonlat coordinate.
+
+- ReadME updated with examples.
+
 
 ## [0.4.0] - 2024-06-12
 

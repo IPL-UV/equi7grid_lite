@@ -4,3 +4,7 @@ demo.py
 dist/
 equi7grid_lite/__pycache__/
 docs/diagrams.drawio
+
+composite_e7g.tif.aux.xml
+
+composite_utm.tif.aux.xml

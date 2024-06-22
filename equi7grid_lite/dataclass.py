@@ -98,10 +98,7 @@ class Equi7GridZone(pydantic.BaseModel):
         return value
 
 
-def dict_to_datamodel(
-    metadata: InternalDataset,
-    index: int
-) -> Equi7GridZone:
+def dict_to_datamodel(metadata: InternalDataset, index: int) -> Equi7GridZone:
     """From a dictionary, create an Equi7GridZone data model.
 
     Args:
@@ -121,5 +118,5 @@ def dict_to_datamodel(
         bbox_geo=metadata.bbox_geo[index],
         bbox_equi7grid=metadata.bbox_equi7grid[index],
         landmasses_equi7grid=metadata.landmasses_equi7grid[index],
-        origin=metadata.origin[index]
+        origin=metadata.origin[index],
     )
