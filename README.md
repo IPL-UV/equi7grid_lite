@@ -1,7 +1,7 @@
-# equi7grid-lite
+# 
 
 <p align="center">
-  <a href="https://ipl-uv.github.io"><img src="docs/logo.jpeg" alt="header" width="50%"></a>
+  <img src="https://huggingface.co/datasets/JulioContrerasH/DataMLSTAC/resolve/main/banner_equigrid.png" width="40%">
 </p>
 
 <p align="center">
@@ -28,43 +28,56 @@
 </a>
 </p>
 
-The `equi7grid-lite` package implements a user-friendly Python interface to interact with the [**Equi7Grid**](https://github.com/TUW-GEO/Equi7Grid) grid system. 
+---
 
-`equi7grid-lite` is an **unofficial Python implementation of [**Equi7Grid**](https://github.com/TUW-GEO/Equi7Grid)**. With this package, users can convert geographic coordinates to Equi7Grid tiles and vice versa. This implementation differs from the official version in tree key ways:
+**GitHub**: [https://github.com/csaybar/equi7grid-lite](https://github.com/csaybar/equi7grid-lite) 🌐
 
-- *Quad-Tree Grid Splitting*: Users are required to split the grid in a Quad-Tree fashion, meaning each grid level is divided into four tiles. For example, transitioning from level 1 to level 0 involves splitting each tile into four regular smaller tiles.
+**PyPI**: [https://pypi.org/project/equi7grid-lite/](https://pypi.org/project/equi7grid-lite/) 🛠️
 
-- *Revised Grid ID Encoding*: The grid ID is always encoded in meters, and the reference to the tile system (e.g., "T1", "T3", "T6") is removed. Instead, tiles are dynamically defined by the `min_grid_size` parameter. Here is a comparison between the original Equi7Grid and equi7grid-lite name conventions:
+---
 
-    - 'EU500M_E036N006T6' -> 'EU2560_E4521N3011'
+## **Overview** 📊
 
-    Where 'EU' is the Equi7Grid zone, '2560' is the `min_grid_size`, 'E4521' is the position in the *x* tile grid, and 'N3011' is the position in the *y* tile grid.
+The **equi7grid-lite** package implements a user-friendly Python interface to interact with the [**Equi7Grid**](https://github.com/TUW-GEO/Equi7Grid) grid system. With this package, users can convert geographic coordinates to Equi7Grid tiles and vice versa.
 
-- *Upper Bound Level*: The maximum grid level is determined as the nearest lower distance to 2_500_000 meters. This threshold serves as a limit to create the Quad-Tree grid structure.
+**equi7grid-lite** is an **unofficial Python implementation of Equi7Grid**. It offers improvements and a simplified interface for grid interaction. This implementation differs from the official version in three key ways:
 
+- **Quad-Tree Grid Splitting**: Users split the grid in a Quad-Tree fashion, with each grid level divided into four tiles.
+- **Revised Grid ID Encoding**: The grid ID is encoded in meters, without the "T1", "T3", or "T6" tile system references.
+- **Upper Bound Level**: The grid level is capped at a threshold of 2,500,000 meters to manage grid complexity.
+
+## **Key Features** ✨
+- **Coordinate Conversion**: Convert between geographic coordinates and Equi7Grid tiles easily. 🌍
+- **Quad-Tree Grid Management**: Supports splitting and managing grids in a Quad-Tree structure. 🗺️
+- **Cubo Integration**: Use equi7grid-lite in combination with Cubo for Earth Observation (EO) data retrieval. 🛰️
 
 <p align="center">
   <img src="docs/equi7grid_tiling.gif" alt="equi7grid-lite" width="100%"/>
 </p>
 
-Please refer to the [Equi7Grid repository](https://github.com/TUW-GEO/Equi7Grid) for **more information of the official implementation**.
+Please refer to the [Equi7Grid repository](https://github.com/TUW-GEO/Equi7Grid) for more information on the official implementation.
 
-## Installation
+## **Installation** ⚙️
 
-The `equi7grid-lite` package is available on PyPI and can be installed using `pip`:
+Install the latest version from PyPI:
 
-```python
+```bash
 pip install equi7grid-lite
 ```
 
-## Usage
 
-The `equi7grid-lite` package provides a single class, `Equi7Grid`, which can be used to convert between geographic coordinates and Equi7Grid tiles.
+## **How to use** 🛠️
+
+### **Basic Usage: Working with the Equi7Grid** 🗺️
+
+#### **Convert geographic coordinates to Equi7Grid tiles**
 
 ```python
 from equi7grid_lite import Equi7Grid
 
 grid_system = Equi7Grid(min_grid_size=2560)
+lon, lat = -79.5, -5.49
+grid_system.lonlat2grid(lon=lon, lat=lat)
 # Equi7Grid(min_grid_size=2560)
 # ----------------
 # levels: 0, 1, ... , 7, 8
@@ -73,18 +86,7 @@ grid_system = Equi7Grid(min_grid_size=2560)
 # max_grid_size: 1310720 meters
 ```
 
-To convert between geographic coordinates and Equi7Grid tiles, use the `lonlat2grid` method.
-
-```python
-
-lon, lat = -79.5, -5.49
-grid_system.lonlat2grid(lon=lon, lat=lat)
-#                  id        lon       lat          x          y zone level  land             geometry
-#0  SA2560_E2009N2525 -79.507568 -5.485739  5144320.0  6465280.0   SA    Z0  True  POLYGON ((514560...
-```
-
-Use the `grid2lonlat` method to convert from Equi7Grid tile id to geographic coordinates.
-
+#### **Convert from grid ID to geographic coordinates**
 
 ```python
 grid_system.grid2lonlat(grid_id="SA2560_E2009N2525")
@@ -92,20 +94,20 @@ grid_system.grid2lonlat(grid_id="SA2560_E2009N2525")
 #0  SA2560_E2009N2525 -79.507568 -5.485739  5144320.0  6465280.0   SA    Z0  True  POLYGON ((514560...
 ```
 
-The `Equi7Grid` class also provides a method to create a grid of Equi7Grid upper-level tiles that
-cover a given bounding box.
+### **Grid Management: Creating Grids for a Specific Region**
+
+You can create a grid for a given bounding box or polygon.
 
 ```python
 import geopandas as gpd
-
 from equi7grid_lite import Equi7Grid
 
-# Define a POLYGON geometry
+# Load country geometry (e.g., Peru)
 world_filepath = gpd.datasets.get_path('naturalearth_lowres')
 world = gpd.read_file(world_filepath)
 country = world[world.name == "Peru"].geometry
 
-# Create a grid of Equi7Grid tiles that cover the bounding box of the POLYGON geometry
+# Create a grid of Equi7Grid tiles that cover the bounding box of the country
 grid = grid_system.create_grid(
     level=4,
     zone="SA",
@@ -116,109 +118,61 @@ grid = grid_system.create_grid(
 grid.to_file("grid.shp")
 ```
 
-By running `create_grid` with different levels, you can obtain its corresponding Equi7Grid Quad-Tree grid structure for any region.
+### **Cubo Integration** 🛰️
 
-![grid](docs/equi7grid_demo.gif)
+Use the `equi7grid-lite` package with [cubo](https://github.com/ESDS-Leipzig/cubo)  to retrieve EO data.
 
-Obtain the metadata of each Equi7Grid zone:
-
-```python
-from equi7grid_lite import Equi7Grid
-
-# Zones: SA, EU, AF, AS, NA, AU
-Equi7Grid.SA
-```
-
-Each zone has the following attributes:
-
-- *id*: The zone ID code.
-- *crs*: The WKT representation of the CRS.
-- *geometry_geo*: The geometry of the zone in EPSG:4326.
-- *geometry_equi7grid*: The geometry of the zone in the Equi7Grid CRS.
-- *bbox_geo*: The bounding box of the zone in EPSG:4326.
-- *bbox_equi7grid*: The bounding box of the zone in the Equi7Grid CRS.
-- *landmasses_equi7grid*: The landmasses of the zone in the Equi7Grid CRS.
-- *origin*: The central meridian and the latitude of origin.
-
-## Use Equi7Grid with cubo
-
-The `equi7grid-lite` package can be used in conjunction with the [cubo](https://github.com/ESDS-Leipzig/cubo) to retrieve Earth Observation (EO) data.
 
 ```python
 import cubo
-import matplotlib.pyplot as plt
-import numpy as np
 import rioxarray
-from rasterio.enums import Resampling
-
 from equi7grid_lite import Equi7Grid
+from rasterio.enums import Resampling
 
 # Initialize Equi7Grid system
 grid_system = Equi7Grid(min_grid_size=2560)
 
-# Specify the center coordinates
+# Use CUBO to retrieve EO data
 lon, lat = -122.4194, 37.7749
-
-# Retrieve parameters for the CUBO request
-cubo_parameters = grid_system.cubo_utm_parameters(lon=lon, lat=lat)
-
-# Define the cube request using CUBO
+cubo_params = grid_system.cubo_utm_parameters(lon=lon, lat=lat)
 da = cubo.create(
-    lat=cubo_parameters["lat"],
-    lon=cubo_parameters["lon"],
-    collection="sentinel-2-l2a",  # Name of the STAC collection
-    bands=["B04", "B03", "B02"],   # Bands to retrieve
-    start_date="2021-08-01",       # Start date of the cube
-    end_date="2021-10-30",         # End date of the cube
-    edge_size=cubo_parameters["distance"] // 10,  # Distance in pixels
-    resolution=10,                 # Pixel size of the cube (m)
-    query={"eo:cloud_cover": {"lt": 50}}  # Query parameters
+    lat=cubo_params["lat"],
+    lon=cubo_params["lon"],
+    collection="sentinel-2-l2a",
+    bands=["B04", "B03", "B02"],
+    start_date="2021-08-01",
+    end_date="2021-10-30",
+    edge_size=cubo_params["distance"] // 10,
+    resolution=10,
+    query={"eo:cloud_cover": {"lt": 50}}
 )
 
-# Add the CRS to the cube
-da = da.rio.write_crs(f"epsg:{da.attrs['epsg']}")
-da = da.drop_vars("cubo:distance_from_center")
-
-# Convert the cube to a dataset and compute median over time
-image = da.to_dataset("band").median("time", skipna=True)
-
-# Increase the resolution of the cube with Lanczos resampling
-image_reprojected = image.rio.reproject(
-    cubo_parameters["crs"],
+# Reproject and resample the cube
+image_reprojected = da.to_dataset("band").rio.reproject(
+    cubo_params["crs"],
     resolution=2.5,
     resampling=Resampling.lanczos
 )
-
-# Downsample the cube with nearest neighbor resampling
-image_reprojected = image_reprojected.rio.reproject(
-    cubo_parameters["crs"],
-    resolution=10,
-    resampling=Resampling.nearest
-)
-
-# Clip the cube to the specified polygon
-composite_e7g = image_reprojected.rio.clip([cubo_parameters["polygon"]]).to_array()
-
-# Save the images in UTM and E7G projections
-composite_e7g.rio.to_raster("composite_e7g.tif")
-image.to_array().rio.to_raster("composite_utm.tif")
 ```
+<p align="center"> 
+    <img src="docs/equi7grid_demo.gif" alt="equi7grid-demo" width="100%"/> 
+</p>
 
-## License
+## **License** 📝
 
-This package is released under the MIT License. For more information, see the [LICENSE](LICENSE) file.
+This package is released under the MIT License. For more information, see the LICENSE file.
 
-## Contributing
+## **Contributing** 🤝
 
 Contributions are welcome! For bug reports or feature requests, please open an issue on GitHub. For contributions, please submit a pull request with a detailed description of the changes.
 
-## Citation
+## **Citation** 📄
 
-This is a simple adaptation of the Equi7Grid paper and code. If you use this package in your research, please consider citing the original Equi7Grid package and paper.
+If you use this package in your research, please consider citing the original Equi7Grid package and paper.
 
-**Package:**
+### **Package:**
 
-```
+```sql
 @software{bernhard_bm_2023_8252376,
   author       = {Bernhard BM and
                   Sebastian Hahn and
@@ -237,19 +191,19 @@ This is a simple adaptation of the Equi7Grid paper and code. If you use this pac
 }
 ```
 
-**Paper:**
+### **Paper:**
 
-```
+```sql
 @article{BAUERMARSCHALLINGER201484,
-title = {Optimisation of global grids for high-resolution remote sensing data},
-journal = {Computers & Geosciences},
-volume = {72},
-pages = {84-93},
-year = {2014},
-issn = {0098-3004},
-doi = {https://doi.org/10.1016/j.cageo.2014.07.005},
-url = {https://www.sciencedirect.com/science/article/pii/S0098300414001629},
-author = {Bernhard Bauer-Marschallinger and Daniel Sabel and Wolfgang Wagner},
-keywords = {Remote sensing, High resolution, Big data, Global grid, Projection, Sampling, Equi7 Grid}
+  title = {Optimisation of global grids for high-resolution remote sensing data},
+  journal = {Computers & Geosciences},
+  volume = {72},
+  pages = {84-93},
+  year = {2014},
+  issn = {0098-3004},
+  doi = {https://doi.org/10.1016/j.cageo.2014.07.005},
+  url = {https://www.sciencedirect.com/science/article/pii/S0098300414001629},
+  author = {Bernhard Bauer-Marschallinger and Daniel Sabel and Wolfgang Wagner},
+  keywords = {Remote sensing, High resolution, Big data, Global grid, Projection, Sampling, Equi7 Grid}
 }
 ```

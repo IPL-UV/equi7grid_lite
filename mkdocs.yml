@@ -1,54 +1,89 @@
-site_name: equi7grid-lite
-repo_url: https://github.com/csaybar/equi7grid-lite
-site_url: https://csaybar.github.io/equi7grid-lite
-site_description: This is a template repository for Python projects that use Poetry for their dependency management.
-site_author: Cesar Aybar
-edit_uri: edit/main/docs/
-repo_name: csaybar/equi7grid-lite
-copyright: Maintained by <a href="https://csaybar.com">Florian</a>.
+docs_dir: .
 
-nav:
-  - Home: index.md
-  - Modules: modules.md
-plugins:
-  - search
-  - mkdocstrings:
-      handlers:
-        python:
-            setup_commands:
-                - import sys
-                - sys.path.append('../')
+# Project information
+site_name: equi7grid-lite
+site_url: https://IPL-UV.github.io/equi7grid_lite
+site_author: IPL-UV Project
+site_description: equi7grid-lite is an unofficial Python implementation of the Equi7Grid grid system for geographic coordinate conversion and grid tile management.
+
+# Repository
+repo_url: https://github.com/IPL-UV/equi7grid_lite
+repo_name: equi7grid-lite
+use_directory_urls: false
+
+# Configuration
 theme:
   name: material
-  feature:
-    tabs: true
+  language: en
   palette:
-    - media: "(prefers-color-scheme: light)"
-      scheme: default
-      primary: white
-      accent: deep orange
-      toggle:
-        icon: material/brightness-7
-        name: Switch to dark mode
-    - media: "(prefers-color-scheme: dark)"
-      scheme: slate
+    - scheme: default
       primary: black
       accent: deep orange
       toggle:
-        icon: material/brightness-4
+        icon: material/toggle-switch-off-outline
+        name: Switch to dark mode
+    - scheme: slate
+      primary: '#201357'
+      accent: white
+      toggle:
+        icon: material/toggle-switch
         name: Switch to light mode
-  icon:
-    repo: fontawesome/brands/github
+  font:
+    text: Roboto
+    code: Roboto Mono
+  logo: https://huggingface.co/datasets/JulioContrerasH/DataMLSTAC/resolve/main/logo_equigrid.png
+  favicon: https://huggingface.co/datasets/JulioContrerasH/DataMLSTAC/resolve/main/logo_equigrid.png
+  features:
+    - navigation.instant
+    - navigation.tabs
+    - navigation.top
+    - navigation.expand
+    - navigation.indexes
+    - header.autohide 
 
+# Page tree
+nav:
+  - Home: 
+    - README.md
+    - Contributing: CONTRIBUTING.md
+    - Changelog: CHANGELOG.md
+    - Code of conduct: CODE_OF_CONDUCT.md
+
+# Plugins
+plugins:
+  - search
+  - same-dir
+  - mkdocstrings:
+      handlers:
+        python:
+          setup_commands:
+            - import sys
+            - sys.path.append('../')
+  - awesome-pages
+
+# Markdown extensions
+markdown_extensions:
+  - meta
+  - admonition
+  - pymdownx.highlight
+  - pymdownx.superfences
+  - pymdownx.pathconverter
+  - pymdownx.tabbed
+  - mdx_truly_sane_lists
+  - pymdownx.tasklist
+
+# Extra CSS
+extra_css:
+  - docs/style/style.css
+
+# Extra JavaScript
+extra_javascript:
+  - docs/js/copybutton.js
+
+# Social media links
 extra:
   social:
     - icon: fontawesome/brands/github
       link: https://github.com/csaybar/equi7grid-lite
     - icon: fontawesome/brands/python
       link: https://pypi.org/project/equi7grid-lite
-
-markdown_extensions:
-  - toc:
-      permalink: true
-  - pymdownx.arithmatex:
-      generic: true
