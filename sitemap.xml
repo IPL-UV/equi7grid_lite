@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+    <url>
+         <loc>https://IPL-UV.github.io/equi7grid_lite/index.html</loc>
+         <lastmod>2024-09-16</lastmod>
+         <changefreq>daily</changefreq>
+    </url>
+    <url>
+         <loc>https://IPL-UV.github.io/equi7grid_lite/CHANGELOG.html</loc>
+         <lastmod>2024-09-16</lastmod>
+         <changefreq>daily</changefreq>
+    </url>
+    <url>
+         <loc>https://IPL-UV.github.io/equi7grid_lite/CODE_OF_CONDUCT.html</loc>
+         <lastmod>2024-09-16</lastmod>
+         <changefreq>daily</changefreq>
+    </url>
+    <url>
+         <loc>https://IPL-UV.github.io/equi7grid_lite/CONTRIBUTING.html</loc>
+         <lastmod>2024-09-16</lastmod>
+         <changefreq>daily</changefreq>
+    </url>
+    <url>
+         <loc>https://IPL-UV.github.io/equi7grid_lite/docs/index.html</loc>
+         <lastmod>2024-09-16</lastmod>
+         <changefreq>daily</changefreq>
+    </url>
+</urlset>
